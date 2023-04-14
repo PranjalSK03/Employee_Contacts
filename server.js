@@ -2,7 +2,7 @@ if(process.env.NODE_ENV !== 'production'){
     require('dotenv').config();
 }
 const express = require('express');
-const bodyParser = require('body-parser');// could have used express.json()
+const bodyParser = require('body-parser');// could have used express.json() but preferring "urlencoded format"
 
 const app = express();
 
