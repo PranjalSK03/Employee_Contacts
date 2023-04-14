@@ -19,9 +19,11 @@ router.get("/", (req, res)=>{
 
 router.get("/:email", (req, res)=>{
     let sql = `
+        SELECT * FROM (
         SELECT * FROM Employee
-        NATURAL JOIN PrimaryEmergencyContact ON PrimaryEmergencyContact.Email = '${req.params.email}'
-        NATURAL JOIN SecondaryEmergencyContact ON SecondaryEmergencyContact.Email = '${req.params.email}'`;
+        NATURAL JOIN PrimaryEmergencyContact
+        NATURAL JOIN SecondaryEmergencyContact) as A
+        WHERE A.Email = '${req.params.email}'`;
 
     let query = db.query(sql, (err, result)=>{
         if(err){
@@ -105,7 +107,7 @@ router.patch("/:email", (req, res)=>{
         sql += `,JobTitle =` + req.body.jobTitle;
     }
     if(req.body.phNo != null){
-        sql += `,PhoneNumber = `+ req.body.phNo;
+        sql += `,PhoneNumber = `+ req.body.phNo + `CHECK (PhoneNumber NOT LIKE '%^[0-9]%')`;
     }
     if(req.body.address != null){
         sql += `,Address = ` + req.body.address;
@@ -139,7 +141,7 @@ router.patch("/:email", (req, res)=>{
         sql1 += `,Relationship1 = ` + req.body.relationship1;
     }
     if(req.body.emgPh1 != null){
-        sql1 += `,EmergencyPh1 = ` + req.body.emgPh1;
+        sql1 += `,EmergencyPh1 = ` + req.body.emgPh1 + `CHECK (EmergencyPh1 NOT LIKE '%^[0-9]%')`;
     }
 
     sql1 += ` WHERE Email= '${req.params.email}'`;
@@ -163,7 +165,7 @@ router.patch("/:email", (req, res)=>{
         sql2 += `,Relationship2 = ` + req.body.relationship2;
     }
     if(req.body.emgPh1 != null){
-        sql2 += `,EmergencyPh2 = ` + req.body.emgPh2;
+        sql2 += `,EmergencyPh2 = ` + req.body.emgPh2  + + `CHECK (EmergencyPh2 NOT LIKE '%^[0-9]%')`;
     }
 
     sql2 += ` WHERE Email= '${req.params.email}'`;
