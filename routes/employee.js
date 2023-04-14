@@ -4,11 +4,21 @@ const router = express.Router();
 
 const db = require("D:/WEB_DEV/intership_mysql/db.js");
 
-router.get("/", (req, res)=>{
-    let sql = `SELECT * FROM Employee
-     NATURAL JOIN PrimaryEmergencyContact 
-        NATURAL JOIN SecondaryEmergencyContact;`;
-    let query = db.query(sql, (err, result)=>{
+//implemented with pagination with the route as http://localhost:3000/employee/<no_of_items_wanted_on_page>/<no_of_the_page>
+router.get("/:noOfItems/:page", (req, res)=>{
+    const pageSize = parseInt(req.params.noOfItems); // number of items per page
+    const currentPage = req.params.page || 1; 
+    const startIndex = (currentPage - 1) * pageSize; 
+    let sql = `
+        SELECT * FROM (
+        SELECT * FROM Employee
+        NATURAL JOIN PrimaryEmergencyContact 
+        NATURAL JOIN SecondaryEmergencyContact) as A
+        ORDER BY A.EMAIL ASC LIMIT ?, ?`;
+
+    const pageParameters = [startIndex, pageSize];
+
+    db.query(sql, pageParameters, (err, result)=>{
         if(err){
             throw err;
         }
@@ -101,22 +111,22 @@ router.post("/", (req, res)=>{
 router.patch("/:email", (req, res)=>{
     let sql = `UPDATE Employee SET Email= '${req.params.email}'`;
     if(req.body.empName != null){
-        sql += `,Name =` + req.body.empName;
+        sql += `,Name = '` + req.body.empName + `'`;
     }
     if(req.body.jobTitle != null){
-        sql += `,JobTitle =` + req.body.jobTitle;
+        sql += `,JobTitle = '` + req.body.jobTitle + `'`;
     }
     if(req.body.phNo != null){
-        sql += `,PhoneNumber = `+ req.body.phNo + `CHECK (PhoneNumber NOT LIKE '%^[0-9]%')`;
+        sql += `,PhoneNumber = '`+ req.body.phNo + `' CHECK (PhoneNumber NOT LIKE '%^[0-9]%')`;
     }
     if(req.body.address != null){
-        sql += `,Address = ` + req.body.address;
+        sql += `,Address = '` + req.body.address + `'`;
     }
     if(req.body.city != null){
-        sql += `,City= ` + req.body.city;
+        sql += `,City= '` + req.body.city + `'`;
     }
     if(req.body.state != null){
-        sql += `,State= ` + req.body.state;
+        sql += `,State= '` + req.body.state + `'`;
     }
 
     sql += ` WHERE Email= '${req.params.email}'`;
@@ -126,22 +136,21 @@ router.patch("/:email", (req, res)=>{
             throw err;
         }
         console.log(result);
-        res.write(result);
-    })
-    res.write("\n" + queryv + "\n");
+        if(req.body.emgContact1 == null && req.body.emgContact2 == null && req.body.relationship1 == null && req.body.relationship2 == null && req.body.emgPh1 == null && req.body.emgPh2 == null)
+            res.send("updated successfully");
+    });
 
 
-
-    let sql1 = `UPDATE Employee SET Email= '${req.params.email}'`;
+    let sql1 = `UPDATE PrimaryEmergencyContact SET Email= '${req.params.email}'`;
 
     if(req.body.emgContact1 != null){
-        sql1 += `,EmergencyContact1 = ` + req.body.emgContact1;
+        sql1 += `,EmergencyContact1 = '` + req.body.emgContact1 + `'`;
     }
     if(req.body.relationship1 != null){
-        sql1 += `,Relationship1 = ` + req.body.relationship1;
+        sql1 += `,Relationship1 = '` + req.body.relationship1 + `'`;
     }
     if(req.body.emgPh1 != null){
-        sql1 += `,EmergencyPh1 = ` + req.body.emgPh1 + `CHECK (EmergencyPh1 NOT LIKE '%^[0-9]%')`;
+        sql1 += `,EmergencyPh1 = '` + req.body.emgPh1 + `CHECK (EmergencyPh1 NOT LIKE '%^[0-9]%')`;
     }
 
     sql1 += ` WHERE Email= '${req.params.email}'`;
@@ -151,18 +160,18 @@ router.patch("/:email", (req, res)=>{
             throw err;
         }
         console.log(result);
-        res.write(result);
+        if(req.body.emgContact2 == null && req.body.relationship2 == null && req.body.emgPh2 == null)
+            res.send("updated successfully");
     })
-    res.write("\n" + query1 + "\n");
 
 
-    let sql2 = `UPDATE Employee SET Email= '${req.params.email}'`;
+    let sql2 = `UPDATE SecondaryEmergencyContact SET Email= '${req.params.email}'`;
 
     if(req.body.emgContact1 != null){
-        sql2 += `,EmergencyContact2 = ` + req.body.emgContact2;
+        sql2 += `,EmergencyContact2 = '` + req.body.emgContact2 + `'`;
     }
     if(req.body.relationship1 != null){
-        sql2 += `,Relationship2 = ` + req.body.relationship2;
+        sql2 += `,Relationship2 = '` + req.body.relationship2 + `'`;
     }
     if(req.body.emgPh1 != null){
         sql2 += `,EmergencyPh2 = ` + req.body.emgPh2  + + `CHECK (EmergencyPh2 NOT LIKE '%^[0-9]%')`;
@@ -175,12 +184,8 @@ router.patch("/:email", (req, res)=>{
             throw err;
         }
         console.log(result);
-        res.write(result);
+        res.send("updated successfully");
     })
-    res.write("\n" + query2 + "\n");
-
-
-    res.send();
 
 });
 
