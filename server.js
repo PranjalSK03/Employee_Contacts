@@ -1,4 +1,6 @@
-require('dotenv').config();
+if(process.env.NODE_ENV !== 'production'){
+    require('dotenv').config();
+}
 const express = require('express');
 const bodyParser = require('body-parser');// could have used express.json()
 
@@ -13,6 +15,6 @@ const employeeCRUD = require('./routes/employee');
 app.use("/employee", employeeCRUD);
 
 
-app.listen(3000, ()=>{
+app.listen(process.env.PORT || 3000, ()=>{
     console.log("server up and running on port 3000")
 })
