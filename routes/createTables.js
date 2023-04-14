@@ -4,6 +4,7 @@ const router = express.Router();
 
 const db = require("D:/WEB_DEV/intership_mysql/db.js");
 
+//since in sample form ther is no Emp_id given hence making uniqueness through Email
 router.get('/EmployeeTable', (req, res)=>{
     let sql =  `CREATE TABLE Employee(
         id int AUTO_INCREMENT,
@@ -28,7 +29,6 @@ router.get('/EmployeeTable', (req, res)=>{
 
 router.get('/EmergencyContact1', (req, res)=>{
     let sql =  `CREATE TABLE PrimaryEmergencyContact(
-        id int AUTO_INCREMENT,
         Email VARCHAR(255) ,
         EmergencyContact1 VARCHAR(255) NOT NULL,
         EmergencyPh1 VARCHAR(10) NOT NULL,
@@ -47,13 +47,12 @@ router.get('/EmergencyContact1', (req, res)=>{
 
 router.get('/EmergencyContact2', (req, res)=>{
     let sql =  `CREATE TABLE SecondaryEmergencyContact(
-        id int AUTO_INCREMENT,
         Email VARCHAR(255) ,
         EmergencyContact2 VARCHAR(255) NOT NULL,
         EmergencyPh2 VARCHAR(10) NOT NULL,
         Relationship2 VARCHAR(255),
         PRIMARY KEY (Email),
-        FOREIGN KEY (Email) REFERENCES Employee(Email)),
+        FOREIGN KEY (Email) REFERENCES PrimaryEmergencyContact(Email)),
         constraint CK_SecondaryEmergencyContact_EmergencyPh2 check (EmergencyPh2 like '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]')`;
     db.query(sql, (err, result)=>{
         if(err) {
