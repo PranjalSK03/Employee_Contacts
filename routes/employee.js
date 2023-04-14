@@ -4,7 +4,7 @@ const router = express.Router();
 const db = require("D:/WEB_DEV/intership_mysql/db.js");
 
 //implemented with pagination with the route as http://localhost:3000/employee/<no_of_items_wanted_on_page>/<no_of_the_page>
-//for gettin all employee details - page wise
+//for getting all employee details - page wise
 router.get("/:noOfItems/:page", (req, res)=>{
     const pageSize = parseInt(req.params.noOfItems); // number of items per page
     const currentPage = req.params.page || 1; 
@@ -12,7 +12,9 @@ router.get("/:noOfItems/:page", (req, res)=>{
     let sql = `
         SELECT * FROM (
         SELECT * FROM Employee
-        NATURAL JOIN PrimaryEmergencyContact 
+        NATURAL JOIN PrimaryEmergencyContact
+        UNION
+        SELECT * FROM Employee
         NATURAL JOIN SecondaryEmergencyContact) as A
         ORDER BY A.EMAIL ASC LIMIT ?, ?`;
 
@@ -33,6 +35,7 @@ router.get("/:email", (req, res)=>{
         SELECT * FROM (
         SELECT * FROM Employee
         NATURAL JOIN PrimaryEmergencyContact
+        UNION
         NATURAL JOIN SecondaryEmergencyContact) as A
         WHERE A.Email = '${req.params.email}'`;
 
@@ -46,7 +49,7 @@ router.get("/:email", (req, res)=>{
 });
 
 
-//for makin any entry to the database
+//for making any entry to the database
 router.post("/", (req, res)=>{
     console.log(req.body);
     let text = "";
@@ -88,25 +91,27 @@ router.post("/", (req, res)=>{
             if( req.body.emgPh2 == '')
                 res.send(text);
         });
+
+        if(req.body.emgPh2 != ''){
+            let emgDetails2 = {
+                Email: req.body.email,
+                EmergencyContact2: req.body.emgContact2, 
+                Relationship2: req.body.relationship2,
+                EmergencyPh2: req.body.emgPh2,
+            };
+            let sql = 'INSERT INTO SecondaryEmergencyContact SET ?';
+            db.query(sql,emgDetails2, (err, result)=>{
+                if(err){
+                    throw err;
+                }
+                console.log(result);
+                text += '\n Inserted successfully in Secondary Emergency contact';
+                res.send(text);
+            });
+        }
     }
 
-    if(req.body.emgPh2 != ''){
-        let emgDetails2 = {
-            Email: req.body.email,
-            EmergencyContact2: req.body.emgContact2, 
-            Relationship2: req.body.relationship2,
-            EmergencyPh2: req.body.emgPh2,
-        };
-        let sql = 'INSERT INTO SecondaryEmergencyContact SET ?';
-        db.query(sql,emgDetails2, (err, result)=>{
-            if(err){
-                throw err;
-            }
-            console.log(result);
-            text += '\n Inserted successfully in Secondary Emergency contact';
-            res.send(text);
-        });
-    }
+    
     
 
 });
@@ -145,7 +150,7 @@ router.patch("/:email", (req, res)=>{
             res.send("updated successfully");
     });
 
-    let flag = 0;
+    let flag1 = 0;
 
     //if no entry in data base then make entry else update  
     let sql1 = `
@@ -158,11 +163,11 @@ router.patch("/:email", (req, res)=>{
         }
         console.log(result);
         if(result.length === 0){
-            flag = 1;
+            flag1 = 1;
         }
     });
 
-    if(flag === 1){
+    if(flag1 === 1){
         if(req.body.emgPh1 != ''){
             let emgDetails1 = {
                 Email: req.params.email,
@@ -209,7 +214,7 @@ router.patch("/:email", (req, res)=>{
 
 
     //if no entry in data base then make entry else update
-    flag = 0 ;
+    let flag2 = 0 ;
 
     let sql2 = `
         SELECT * FROM SecondaryEmergencyContact
@@ -221,9 +226,9 @@ router.patch("/:email", (req, res)=>{
         }
         console.log(result);
         if(result.length === 0)
-            flag = 1;
+            flag2 = 1;
     });
-    if(flag === 1){
+    if(flag2 === 1 && flag1 === 1){
         if(req.body.emgPh2 != ''){
             let emgDetails2 = {
                 Email: req.body.email,
