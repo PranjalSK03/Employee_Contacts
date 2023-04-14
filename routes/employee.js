@@ -5,6 +5,7 @@ const router = express.Router();
 const db = require("D:/WEB_DEV/intership_mysql/db.js");
 
 //implemented with pagination with the route as http://localhost:3000/employee/<no_of_items_wanted_on_page>/<no_of_the_page>
+//for gettin all employee details - page wise
 router.get("/:noOfItems/:page", (req, res)=>{
     const pageSize = parseInt(req.params.noOfItems); // number of items per page
     const currentPage = req.params.page || 1; 
@@ -27,6 +28,7 @@ router.get("/:noOfItems/:page", (req, res)=>{
     })
 });
 
+//for getting a employee details
 router.get("/:email", (req, res)=>{
     let sql = `
         SELECT * FROM (
@@ -35,7 +37,7 @@ router.get("/:email", (req, res)=>{
         NATURAL JOIN SecondaryEmergencyContact) as A
         WHERE A.Email = '${req.params.email}'`;
 
-    let query = db.query(sql, (err, result)=>{
+    db.query(sql, (err, result)=>{
         if(err){
             throw err;
         }
@@ -44,6 +46,8 @@ router.get("/:email", (req, res)=>{
     })
 });
 
+
+//for makin any entry to the database
 router.post("/", (req, res)=>{
     console.log(req.body);
     let text = "";
@@ -57,7 +61,7 @@ router.post("/", (req, res)=>{
         State: req.body.state
     };
     let sql = 'INSERT INTO Employee SET ?';
-    let query = db.query(sql, details, (err, result)=>{
+    db.query(sql, details, (err, result)=>{
         if(err){
             throw err;
         }
@@ -108,6 +112,8 @@ router.post("/", (req, res)=>{
 
 });
 
+
+//update the employee details
 router.patch("/:email", (req, res)=>{
     let sql = `UPDATE Employee SET Email= '${req.params.email}'`;
     if(req.body.empName != null){
@@ -131,7 +137,7 @@ router.patch("/:email", (req, res)=>{
 
     sql += ` WHERE Email= '${req.params.email}'`;
 
-    let query = db.query(sql, (err, result)=>{
+    db.query(sql, (err, result)=>{
         if(err){
             throw err;
         }
@@ -140,55 +146,131 @@ router.patch("/:email", (req, res)=>{
             res.send("updated successfully");
     });
 
+    let flag = 0;
 
-    let sql1 = `UPDATE PrimaryEmergencyContact SET Email= '${req.params.email}'`;
+    //if no entry in data base then make entry else update  
+    let sql1 = `
+        SELECT * FROM PrimaryEmergencyContact
+        WHERE Email = '${req.params.email}'`;
 
-    if(req.body.emgContact1 != null){
-        sql1 += `,EmergencyContact1 = '` + req.body.emgContact1 + `'`;
-    }
-    if(req.body.relationship1 != null){
-        sql1 += `,Relationship1 = '` + req.body.relationship1 + `'`;
-    }
-    if(req.body.emgPh1 != null){
-        sql1 += `,EmergencyPh1 = '` + req.body.emgPh1 + `CHECK (EmergencyPh1 NOT LIKE '%^[0-9]%')`;
-    }
-
-    sql1 += ` WHERE Email= '${req.params.email}'`;
-
-    let query1 = db.query(sql1, (err, result)=>{
+    db.query(sql1, (err, result)=>{
         if(err){
             throw err;
         }
         console.log(result);
-        if(req.body.emgContact2 == null && req.body.relationship2 == null && req.body.emgPh2 == null)
+        if(result.length === 0){
+            flag = 1;
+        }
+    });
+
+    if(flag === 1){
+        if(req.body.emgPh1 != ''){
+            let emgDetails1 = {
+                Email: req.params.email,
+                EmergencyContact1: req.body.emgContact1, 
+                Relationship1: req.body.relationship1,
+                EmergencyPh1: req.body.emgPh1,
+            };
+            let sql = 'INSERT INTO PrimaryEmergencyContact SET ?';
+            db.query(sql,emgDetails1, (err, result)=>{
+                if(err){
+                    throw err;
+                }
+                console.log(result);
+                text += '\n Inserted successfully in Primary Emergency contact';
+                if( req.body.emgPh2 == '')
+                    res.send(text);
+            });
+        }
+    }
+    else{
+        sql1 = `UPDATE PrimaryEmergencyContact SET Email= '${req.params.email}'`;
+
+        if(req.body.emgContact1 != null){
+            sql1 += `,EmergencyContact1 = '` + req.body.emgContact1 + `'`;
+        }
+        if(req.body.relationship1 != null){
+            sql1 += `,Relationship1 = '` + req.body.relationship1 + `'`;
+        }
+        if(req.body.emgPh1 != null){
+            sql1 += `,EmergencyPh1 = '` + req.body.emgPh1 + `CHECK (EmergencyPh1 NOT LIKE '%^[0-9]%')`;
+        }
+
+        sql1 += ` WHERE Email= '${req.params.email}'`;
+
+        db.query(sql1, (err, result)=>{
+            if(err){
+                throw err;
+            }
+            console.log(result);
+            if(req.body.emgContact2 == null && req.body.relationship2 == null && req.body.emgPh2 == null)
+                res.send("updated successfully");
+        })
+    }
+
+
+    //if no entry in data base then make entry else update
+    flag = 0 ;
+
+    let sql2 = `
+        SELECT * FROM SecondaryEmergencyContact
+        WHERE Email = '${req.params.email}'`;
+
+    db.query(sql2, (err, result)=>{
+        if(err){
+            throw err;
+        }
+        console.log(result);
+        if(result.length === 0)
+            flag = 1;
+    });
+    if(flag === 1){
+        if(req.body.emgPh2 != ''){
+            let emgDetails2 = {
+                Email: req.body.email,
+                EmergencyContact2: req.body.emgContact2, 
+                Relationship2: req.body.relationship2,
+                EmergencyPh2: req.body.emgPh2,
+            };
+            let sql = 'INSERT INTO SecondaryEmergencyContact SET ?';
+            db.query(sql,emgDetails2, (err, result)=>{
+                if(err){
+                    throw err;
+                }
+                console.log(result);
+                text += '\n Inserted successfully in Secondary Emergency contact';
+                res.send(text);
+            });
+        }
+    }
+    else{
+        sql2 = `UPDATE SecondaryEmergencyContact SET Email= '${req.params.email}'`;
+
+        if(req.body.emgContact1 != null){
+            sql2 += `,EmergencyContact2 = '` + req.body.emgContact2 + `'`;
+        }
+        if(req.body.relationship1 != null){
+            sql2 += `,Relationship2 = '` + req.body.relationship2 + `'`;
+        }
+        if(req.body.emgPh1 != null){
+            sql2 += `,EmergencyPh2 = ` + req.body.emgPh2  + + `CHECK (EmergencyPh2 NOT LIKE '%^[0-9]%')`;
+        }
+
+        sql2 += ` WHERE Email= '${req.params.email}'`;
+
+        db.query(sql2, (err, result)=>{
+            if(err){
+                throw err;
+            }
+            console.log(result);
             res.send("updated successfully");
-    })
-
-
-    let sql2 = `UPDATE SecondaryEmergencyContact SET Email= '${req.params.email}'`;
-
-    if(req.body.emgContact1 != null){
-        sql2 += `,EmergencyContact2 = '` + req.body.emgContact2 + `'`;
+        })
     }
-    if(req.body.relationship1 != null){
-        sql2 += `,Relationship2 = '` + req.body.relationship2 + `'`;
-    }
-    if(req.body.emgPh1 != null){
-        sql2 += `,EmergencyPh2 = ` + req.body.emgPh2  + + `CHECK (EmergencyPh2 NOT LIKE '%^[0-9]%')`;
-    }
-
-    sql2 += ` WHERE Email= '${req.params.email}'`;
-
-    let query2 = db.query(sql2, (err, result)=>{
-        if(err){
-            throw err;
-        }
-        console.log(result);
-        res.send("updated successfully");
-    })
 
 });
 
+
+//delete the employee contact
 router.delete("/:email", (req, res)=>{
 
     let sql = `
@@ -224,8 +306,6 @@ router.delete("/:email", (req, res)=>{
         console.log(result);
         res.send("Deleted successfully");
     })
-
-
 });
 
 

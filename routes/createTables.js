@@ -5,6 +5,7 @@ const router = express.Router();
 const db = require("D:/WEB_DEV/intership_mysql/db.js");
 
 //since in sample form ther is no Emp_id given hence making uniqueness through Email
+//creating the employee schema
 router.get('/EmployeeTable', (req, res)=>{
     let sql =  `CREATE TABLE Employee(
         Email VARCHAR(255) NOT NULL,
@@ -27,6 +28,7 @@ router.get('/EmployeeTable', (req, res)=>{
     })
 });
 
+//separate emergency contact
 router.get('/EmergencyContact1', (req, res)=>{
     let sql =  `CREATE TABLE PrimaryEmergencyContact(
         Email VARCHAR(255) ,
@@ -45,6 +47,7 @@ router.get('/EmergencyContact1', (req, res)=>{
     })
 });
 
+//separate emergency contact 2
 router.get('/EmergencyContact2', (req, res)=>{
     let sql =  `CREATE TABLE SecondaryEmergencyContact(
         Email VARCHAR(255) ,
