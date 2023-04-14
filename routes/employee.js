@@ -5,10 +5,9 @@ const router = express.Router();
 const db = require("D:/WEB_DEV/intership_mysql/db.js");
 
 router.get("/", (req, res)=>{
-    let sql = `
-        SELECT * FROM Employee
-        NATURAL JOIN PrimaryEmergencyContact ON Employee.Email = PrimaryEmergencyContact.Email
-        NATURAL JOIN SecondaryEmergencyContact ON SecondaryEmergencyContact.Email =  PrimaryEmergencyContact.Email`;
+    let sql = `SELECT * FROM Employee
+     NATURAL JOIN PrimaryEmergencyContact 
+        NATURAL JOIN SecondaryEmergencyContact;`;
     let query = db.query(sql, (err, result)=>{
         if(err){
             throw err;
@@ -21,8 +20,8 @@ router.get("/", (req, res)=>{
 router.get("/:email", (req, res)=>{
     let sql = `
         SELECT * FROM Employee
-        NATURAL JOIN PrimaryEmergencyContact ON PrimaryEmergencyContact.Email = Employee.Email AND PrimaryEmergencyContact.Email = '${req.params.email}'
-        NATURAL JOIN SecondaryEmergencyContact ON SecondaryEmergencyContact.Email = PrimaryEmergencyContact.Email AND SecondaryEmergencyContact.Email = '${req.params.email}'`;
+        NATURAL JOIN PrimaryEmergencyContact ON PrimaryEmergencyContact.Email = '${req.params.email}'
+        NATURAL JOIN SecondaryEmergencyContact ON SecondaryEmergencyContact.Email = '${req.params.email}'`;
 
     let query = db.query(sql, (err, result)=>{
         if(err){
@@ -34,6 +33,8 @@ router.get("/:email", (req, res)=>{
 });
 
 router.post("/", (req, res)=>{
+    console.log(req.body);
+    let text = "";
     let details = {
         Email: req.body.email,
         Name: req.body.empName, 
@@ -49,12 +50,13 @@ router.post("/", (req, res)=>{
             throw err;
         }
         console.log(result);
-        res.write('Employe details entered successfully');
+        text = 'Employe details entered successfully';
+        if( req.body.emgPh1 == '' && req.body.emgPh2 == '')
+            res.send(text);
     });
 
-    let query1, query2;
 
-    if(req.body.emgPh1 != null){
+    if(req.body.emgPh1 != ''){
         let emgDetails1 = {
             Email: req.body.email,
             EmergencyContact1: req.body.emgContact1, 
@@ -62,16 +64,18 @@ router.post("/", (req, res)=>{
             EmergencyPh1: req.body.emgPh1,
         };
         let sql = 'INSERT INTO PrimaryEmergencyContact SET ?';
-        query1 = db.query(sql,emgDetails1, (err, result)=>{
+        db.query(sql,emgDetails1, (err, result)=>{
             if(err){
                 throw err;
             }
             console.log(result);
-            res.write('Inserted successfully in Primary Emergency contact');
+            text += '\n Inserted successfully in Primary Emergency contact';
+            if( req.body.emgPh2 == '')
+                res.send(text);
         });
     }
 
-    if(req.body.emgPh2 != null){
+    if(req.body.emgPh2 != ''){
         let emgDetails2 = {
             Email: req.body.email,
             EmergencyContact2: req.body.emgContact2, 
@@ -79,17 +83,16 @@ router.post("/", (req, res)=>{
             EmergencyPh2: req.body.emgPh2,
         };
         let sql = 'INSERT INTO SecondaryEmergencyContact SET ?';
-        query2 = db.query(sql,emgDetails2, (err, result)=>{
+        db.query(sql,emgDetails2, (err, result)=>{
             if(err){
                 throw err;
             }
             console.log(result);
-            res.write('Inserted successfully in Secondary Emergency contact');
+            text += '\n Inserted successfully in Secondary Emergency contact';
+            res.send(text);
         });
     }
-
-    res.write("\n"+ query + "\n" + query1 + "\n" + query2);
-    res.send();
+    
 
 });
 
@@ -174,23 +177,48 @@ router.patch("/:email", (req, res)=>{
     })
     res.write("\n" + query2 + "\n");
 
-    
+
     res.send();
 
 });
 
 router.delete("/:email", (req, res)=>{
-    let sql = `
-        DELETE FROM Employee
-        WHERE email: '${req.params.email}'`;
 
-    let query = db.query(sql, (err, result)=>{
+    let sql = `
+        DELETE FROM SecondaryEmergencyContact
+        WHERE Email= '${req.params.email}'`;
+
+    db.query(sql, (err, result)=>{
         if(err){
             throw err;
         }
         console.log(result);
-        res.send(result);
     })
+    
+    sql = `
+        DELETE FROM PrimaryEmergencyContact
+        WHERE Email= '${req.params.email}'`;
+
+    db.query(sql, (err, result)=>{
+        if(err){
+            throw err;
+        }
+        console.log(result);
+    })
+
+    sql = `
+        DELETE FROM Employee
+        WHERE Email= '${req.params.email}'`;
+
+    db.query(sql, (err, result)=>{
+        if(err){
+            throw err;
+        }
+        console.log(result);
+        res.send("Deleted successfully");
+    })
+
+
 });
 
 

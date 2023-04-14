@@ -15,7 +15,8 @@ router.get('/EmployeeTable', (req, res)=>{
         City VARCHAR(255) NOT NULL,
         State VARCHAR(255) NOT NULL,
         PRIMARY KEY (Email),
-        constraint CK_Employee_PhoneNumber check (PhoneNumber like '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'))`;
+        CONSTRAINT CK_PhoneNumber CHECK (PhoneNumber NOT LIKE '%[^0-9]%')
+        )`;
 
     db.query(sql, (err, result)=>{
         if(err) {
@@ -34,7 +35,7 @@ router.get('/EmergencyContact1', (req, res)=>{
         Relationship1 VARCHAR(255),
         PRIMARY KEY (Email),
         FOREIGN KEY (Email) REFERENCES Employee(Email),
-        constraint CK_PrimaryEmergencyContact_EmergencyPh1 check (EmergencyPh1 like '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'))`;
+        constraint CK_EmergencyPh1 CHECK (EmergencyPh1 NOT LIKE '%[^0-9]%'))`;
     db.query(sql, (err, result)=>{
         if(err) {
             throw err;
@@ -51,8 +52,8 @@ router.get('/EmergencyContact2', (req, res)=>{
         EmergencyPh2 VARCHAR(10) NOT NULL,
         Relationship2 VARCHAR(255),
         PRIMARY KEY (Email),
-        FOREIGN KEY (Email) REFERENCES PrimaryEmergencyContact(Email),
-        constraint CK_SecondaryEmergencyContact_EmergencyPh2 check (EmergencyPh2 like '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'))`;
+        FOREIGN KEY (Email) REFERENCES Employee(Email),
+        constraint CK_EmergencyPh2 CHECK (EmergencyPh2 NOT LIKE '%[^0-9]%'))`;
     db.query(sql, (err, result)=>{
         if(err) {
             throw err;
